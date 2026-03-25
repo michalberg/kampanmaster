@@ -18,33 +18,48 @@ export function useAuth() {
       setUser(firebaseUser);
       setIsAdmin(member.isAdmin);
       setAccessDenied(false);
+      return true;
     } else {
       await signOut(auth);
       setUser(null);
       setIsAdmin(false);
       setAccessDenied(true);
+      return false;
     }
   };
 
   useEffect(() => {
-    // Zpracuj výsledek redirect přihlášení
-    getRedirectResult(auth).then(async (result) => {
-      if (result?.user) {
-        await checkMember(result.user);
-      }
-    }).catch(console.error);
+    let unsubscribe;
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        await checkMember(firebaseUser);
-      } else {
-        setUser(null);
-        setIsAdmin(false);
+    const init = async () => {
+      // Nejprve zpracuj redirect výsledek (pokud existuje)
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          await checkMember(result.user);
+          setLoading(false);
+          // Teprve potom napojíme listener
+          unsubscribe = onAuthStateChanged(auth, () => {});
+          return;
+        }
+      } catch (e) {
+        console.error('Redirect result error:', e);
       }
-      setLoading(false);
-    });
 
-    return unsubscribe;
+      // Jinak standardní auth listener
+      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          await checkMember(firebaseUser);
+        } else {
+          setUser(null);
+          setIsAdmin(false);
+        }
+        setLoading(false);
+      });
+    };
+
+    init();
+    return () => unsubscribe?.();
   }, []);
 
   const login = async () => {
