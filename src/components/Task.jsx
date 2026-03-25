@@ -44,7 +44,7 @@ export function Task({ task, projectId, onToggle, onEdit, onDelete }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-start py-2.5 border-b border-gray-100 group last:border-0 ${isDragging ? 'bg-blue-50' : ''}`}
+      className={`flex items-start py-1.5 border-b border-gray-100 group last:border-0 ${isDragging ? 'bg-blue-50' : ''}`}
     >
       {/* Drag handle */}
       <button
@@ -70,22 +70,24 @@ export function Task({ task, projectId, onToggle, onEdit, onDelete }) {
           {detectUrls(task.text)}
         </div>
 
-        <div className="mt-1 flex flex-wrap gap-1.5 items-center text-xs">
-          {task.people?.length > 0 && (
-            <span className="text-gray-500">👤 {task.people.join(', ')}</span>
-          )}
-          {task.tag && (
-            <span className={`px-2 py-0.5 rounded font-medium ${TAG_STYLES[task.tag] || 'bg-gray-100 text-gray-600'}`}>
-              {task.tag}
-            </span>
-          )}
-          {task.deadline && (
-            <span className={`flex items-center gap-1 ${overdue ? 'text-red-600 font-medium' : dueSoon ? 'text-amber-600' : 'text-gray-500'}`}>
-              📅 {formatDate(task.deadline)}
-              {overdue && <span className="text-red-600">(!)</span>}
-            </span>
-          )}
-        </div>
+        {(task.people?.length > 0 || task.tag || task.deadline) && (
+          <div className="mt-0.5 flex flex-row flex-wrap gap-x-2 gap-y-0.5 items-center text-xs">
+            {task.people?.length > 0 && (
+              <span className="text-gray-400">👤 {task.people.join(', ')}</span>
+            )}
+            {task.tag && (
+              <span className={`px-1.5 py-0 rounded font-medium ${TAG_STYLES[task.tag] || 'bg-gray-100 text-gray-600'}`}>
+                {task.tag}
+              </span>
+            )}
+            {task.deadline && (
+              <span className={`flex items-center gap-0.5 ${overdue ? 'text-red-600 font-medium' : dueSoon ? 'text-amber-600' : 'text-gray-400'}`}>
+                📅 {formatDate(task.deadline)}
+                {overdue && <span>(!!!)</span>}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Action buttons */}

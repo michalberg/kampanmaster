@@ -32,7 +32,7 @@ export function Project({ project, members, filterPerson, showDone, user, isAdmi
     <div ref={setNodeRef} style={style} className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden ${isDragging ? 'ring-2 ring-blue-400' : ''}`}>
 
       {/* Hlavička projektu */}
-      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+      <div className="bg-gray-50 px-3 py-2.5 border-b border-gray-200">
         <div className="flex items-start gap-2">
           {isAdmin && (
             <button
@@ -101,7 +101,7 @@ export function Project({ project, members, filterPerson, showDone, user, isAdmi
 
       {/* Seznam úkolů */}
       {expanded && (
-        <div className="bg-white px-4 py-3">
+        <div className="bg-white px-3 py-2">
           <TaskList
             projectId={project.id}
             members={members}

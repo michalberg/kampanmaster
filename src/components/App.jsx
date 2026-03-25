@@ -46,7 +46,7 @@ export default function App() {
     <div className="min-h-screen bg-[#ede8dc]">
       <Header user={user} onLogout={logout} />
 
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      <main className="max-w-5xl mx-auto px-2 sm:px-4 py-3 sm:py-6">
         <Alerts user={user} />
 
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
