@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
+import {
+  onAuthStateChanged, signInWithPopup, signInWithRedirect,
+  getRedirectResult, signOut, browserLocalPersistence, setPersistence
+} from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 import { fetchTeamMembers } from '../lib/googleSheets';
 
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+// Nastav perzistenci na localStorage (ne sessionStorage)
+setPersistence(auth, browserLocalPersistence).catch(console.error);
 
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -29,49 +33,39 @@ export function useAuth() {
   };
 
   useEffect(() => {
-    let unsubscribe;
+    // Zpracuj redirect výsledek pokud existuje
+    getRedirectResult(auth).then(async (result) => {
+      if (result?.user) await checkMember(result.user);
+    }).catch(console.error);
 
-    const init = async () => {
-      // Nejprve zpracuj redirect výsledek (pokud existuje)
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          await checkMember(result.user);
-          setLoading(false);
-          // Teprve potom napojíme listener
-          unsubscribe = onAuthStateChanged(auth, () => {});
-          return;
-        }
-      } catch (e) {
-        console.error('Redirect result error:', e);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        await checkMember(firebaseUser);
+      } else {
+        setUser(null);
+        setIsAdmin(false);
       }
+      setLoading(false);
+    });
 
-      // Jinak standardní auth listener
-      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-          await checkMember(firebaseUser);
-        } else {
-          setUser(null);
-          setIsAdmin(false);
-        }
-        setLoading(false);
-      });
-    };
-
-    init();
-    return () => unsubscribe?.();
+    return unsubscribe;
   }, []);
 
   const login = async () => {
     setAccessDenied(false);
     try {
-      if (isMobile) {
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        await signInWithPopup(auth, googleProvider);
-      }
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
-      console.error('Login error:', error);
+      // Popup blokovaný — fallback na redirect
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (e) {
+          console.error('Redirect login error:', e);
+        }
+      } else {
+        console.error('Login error:', error);
+      }
     }
   };
 
